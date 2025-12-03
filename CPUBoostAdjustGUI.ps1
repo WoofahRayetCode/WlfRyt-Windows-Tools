@@ -182,7 +182,13 @@ $btnClose.Size = New-Object System.Drawing.Size(90,30)
 # Event handler for Apply button
 $btnApply.Add_Click({
     try {
-        $scheme = (powercfg /getactivescheme) -replace '.*GUID: ([a-f0-9\-]+).*','$1'
+        # Get all power schemes
+        $allSchemes = powercfg /list | Select-String "Power Scheme GUID:" | ForEach-Object {
+            if ($_ -match "([a-f0-9\-]{36})") {
+                $matches[1]
+            }
+        }
+        
         $subProcessor = "54533251-82be-4824-96c1-47b60b740d00"
         $boostMode    = "be337238-0d82-4146-a960-4f3749d470c7"
         $minProcState = "893dee8e-2bef-41e0-89c6-b55d0929964c"
@@ -206,22 +212,37 @@ $btnApply.Add_Click({
             $modeName = "Efficient Enabled"
         }
 
-        powercfg /setacvalueindex $scheme $subProcessor $boostMode $value
-        powercfg /setdcvalueindex $scheme $subProcessor $boostMode $value
-        
         # Apply processor performance settings
         $minValue = $trackMinProc.Value
         $maxValue = $trackMaxProc.Value
         
-        powercfg /setacvalueindex $scheme $subProcessor $minProcState $minValue
-        powercfg /setdcvalueindex $scheme $subProcessor $minProcState $minValue
-        powercfg /setacvalueindex $scheme $subProcessor $maxProcState $maxValue
-        powercfg /setdcvalueindex $scheme $subProcessor $maxProcState $maxValue
+        # Apply settings to all power plans
+        $successCount = 0
+        foreach ($scheme in $allSchemes) {
+            try {
+                # Apply boost mode
+                powercfg /setacvalueindex $scheme $subProcessor $boostMode $value
+                powercfg /setdcvalueindex $scheme $subProcessor $boostMode $value
+                
+                # Apply processor performance settings
+                powercfg /setacvalueindex $scheme $subProcessor $minProcState $minValue
+                powercfg /setdcvalueindex $scheme $subProcessor $minProcState $minValue
+                powercfg /setacvalueindex $scheme $subProcessor $maxProcState $maxValue
+                powercfg /setdcvalueindex $scheme $subProcessor $maxProcState $maxValue
+                
+                $successCount++
+            }
+            catch {
+                # Continue with other schemes even if one fails
+            }
+        }
         
-        powercfg /S $scheme
+        # Activate the current scheme to apply changes immediately
+        $activeScheme = (powercfg /getactivescheme) -replace '.*GUID: ([a-f0-9\-]+).*','$1'
+        powercfg /S $activeScheme
 
         $lblStatus.Text = "Current Mode: $modeName"
-        [System.Windows.Forms.MessageBox]::Show("Settings Applied:`n`nCPU Boost: $modeName`nMin Processor: $minValue%`nMax Processor: $maxValue%", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+        [System.Windows.Forms.MessageBox]::Show("Settings Applied to $successCount power plan(s):`n`nCPU Boost: $modeName`nMin Processor: $minValue%`nMax Processor: $maxValue%", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
     }
     catch {
         [System.Windows.Forms.MessageBox]::Show("Error applying settings: $($_.Exception.Message)", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
