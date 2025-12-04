@@ -35,13 +35,33 @@ MAME_GITHUB_RELEASES_API = "https://api.github.com/repos/mamedev/mame/releases/l
 # Supported compressed file extensions
 COMPRESSED_EXTENSIONS = {'.zip', '.7z', '.rar', '.gz', '.tar', '.tar.gz', '.tgz'}
 
+# Retro Gaming Color Scheme
+COLORS = {
+    'bg_dark': '#0a0a12',        # Deep dark blue-black (CRT off)
+    'bg_medium': '#12121a',       # Slightly lighter dark
+    'bg_light': '#1a1a2e',        # Panel backgrounds
+    'bg_input': '#16213e',        # Input field background
+    'text_primary': '#00ff88',    # Neon green (classic terminal)
+    'text_secondary': '#00ccff',  # Cyan accent
+    'text_muted': '#5c6b7a',      # Muted gray
+    'accent_pink': '#ff00aa',     # Hot pink/magenta
+    'accent_purple': '#9945ff',   # Purple
+    'accent_yellow': '#ffdd00',   # Arcade yellow
+    'accent_orange': '#ff6b35',   # Warning orange
+    'accent_red': '#ff3366',      # Danger red
+    'button_green': '#00cc66',    # Success green
+    'button_blue': '#0088ff',     # Action blue
+    'scanline': '#ffffff08',      # Subtle scanline effect
+}
+
 
 class ROMConverter:
     def __init__(self, master):
         self.master = master
-        master.title("ROM Converter")
-        master.geometry("800x600")
+        master.title("⚡ ROM CONVERTER ⚡")
+        master.geometry("850x700")
         master.resizable(True, True)
+        master.configure(bg=COLORS['bg_dark'])
         
         # Config file location
         self.config_file = Path.home() / ".rom_converter_config.json"
@@ -502,132 +522,226 @@ class ROMConverter:
             pass
     
     def setup_ui(self):
-        """Setup the user interface"""
-        # Main container
-        main_frame = Frame(self.master, padx=10, pady=10)
+        """Setup the user interface with retro gaming aesthetic"""
+        # Configure ttk styles for retro look
+        style = ttk.Style()
+        style.theme_use('clam')
+        style.configure("Retro.Horizontal.TProgressbar",
+                       troughcolor=COLORS['bg_light'],
+                       background=COLORS['text_primary'],
+                       darkcolor=COLORS['button_green'],
+                       lightcolor=COLORS['text_primary'],
+                       bordercolor=COLORS['text_primary'])
+        
+        # Main container with dark background
+        main_frame = Frame(self.master, padx=15, pady=15, bg=COLORS['bg_dark'])
         main_frame.pack(fill="both", expand=True)
         
+        # Title banner
+        title_frame = Frame(main_frame, bg=COLORS['bg_light'], pady=8)
+        title_frame.pack(fill="x", pady=(0, 15))
+        
+        title_label = Label(title_frame, text="◄ ROM CONVERTER ►", 
+                           font=("Consolas", 18, "bold"),
+                           fg=COLORS['text_primary'], bg=COLORS['bg_light'])
+        title_label.pack()
+        
+        subtitle = Label(title_frame, text="PS1 • PS2 • CHD Compression Tool",
+                        font=("Consolas", 9),
+                        fg=COLORS['text_secondary'], bg=COLORS['bg_light'])
+        subtitle.pack()
+        
         # Directory selection
-        dir_frame = Frame(main_frame)
-        dir_frame.pack(fill="x", pady=(0, 10))
+        dir_frame = Frame(main_frame, bg=COLORS['bg_dark'])
+        dir_frame.pack(fill="x", pady=(0, 8))
         
-        Label(dir_frame, text="ROM Directory:").pack(side="left", padx=(0, 10))
+        Label(dir_frame, text="📁 ROM Directory:", font=("Consolas", 10, "bold"),
+              fg=COLORS['text_primary'], bg=COLORS['bg_dark']).pack(side="left", padx=(0, 10))
         
-        self.dir_entry = Entry(dir_frame)
-        self.dir_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
-        # Restore saved directory
+        self.dir_entry = Entry(dir_frame, font=("Consolas", 10),
+                              bg=COLORS['bg_input'], fg=COLORS['text_primary'],
+                              insertbackground=COLORS['text_primary'],
+                              relief="flat", highlightthickness=1,
+                              highlightcolor=COLORS['text_secondary'],
+                              highlightbackground=COLORS['text_muted'])
+        self.dir_entry.pack(side="left", fill="x", expand=True, padx=(0, 10), ipady=4)
         if self.source_dir:
             self.dir_entry.insert(0, self.source_dir)
         
-        Button(dir_frame, text="Browse", command=self.browse_directory).pack(side="left")
+        Button(dir_frame, text="[ BROWSE ]", command=self.browse_directory,
+               font=("Consolas", 9, "bold"), bg=COLORS['bg_light'],
+               fg=COLORS['text_secondary'], activebackground=COLORS['accent_purple'],
+               activeforeground="white", relief="flat", cursor="hand2").pack(side="left")
         
         # chdman location
-        chdman_frame = Frame(main_frame)
-        chdman_frame.pack(fill="x", pady=(0, 10))
+        chdman_frame = Frame(main_frame, bg=COLORS['bg_dark'])
+        chdman_frame.pack(fill="x", pady=(0, 8))
         
-        Label(chdman_frame, text="chdman:").pack(side="left", padx=(0, 10))
-        self.chdman_label = Label(chdman_frame, text=self.chdman_path or "Not set", 
-                                  fg="blue", anchor="w")
+        Label(chdman_frame, text="⚙ chdman:", font=("Consolas", 10, "bold"),
+              fg=COLORS['accent_yellow'], bg=COLORS['bg_dark']).pack(side="left", padx=(0, 10))
+        self.chdman_label = Label(chdman_frame, text=self.chdman_path or "Not set",
+                                  font=("Consolas", 9),
+                                  fg=COLORS['text_secondary'], bg=COLORS['bg_dark'], anchor="w")
         self.chdman_label.pack(side="left", fill="x", expand=True, padx=(0, 10))
-        Button(chdman_frame, text="Change Location", 
-               command=self.browse_chdman).pack(side="left")
+        Button(chdman_frame, text="[ CHANGE ]", command=self.browse_chdman,
+               font=("Consolas", 9), bg=COLORS['bg_light'],
+               fg=COLORS['text_muted'], activebackground=COLORS['accent_purple'],
+               activeforeground="white", relief="flat", cursor="hand2").pack(side="left")
         
         # 7-Zip location
-        seven_zip_frame = Frame(main_frame)
-        seven_zip_frame.pack(fill="x", pady=(0, 10))
+        seven_zip_frame = Frame(main_frame, bg=COLORS['bg_dark'])
+        seven_zip_frame.pack(fill="x", pady=(0, 12))
         
-        Label(seven_zip_frame, text="7-Zip:").pack(side="left", padx=(0, 10))
-        self.seven_zip_label = Label(seven_zip_frame, text=self.seven_zip_path or "Not set (optional for .7z/.rar)", 
-                                  fg="blue" if self.seven_zip_path else "gray", anchor="w")
+        Label(seven_zip_frame, text="📦 7-Zip:", font=("Consolas", 10, "bold"),
+              fg=COLORS['accent_yellow'], bg=COLORS['bg_dark']).pack(side="left", padx=(0, 10))
+        self.seven_zip_label = Label(seven_zip_frame, 
+                                     text=self.seven_zip_path or "Not set (optional for .7z/.rar)",
+                                     font=("Consolas", 9),
+                                     fg=COLORS['text_secondary'] if self.seven_zip_path else COLORS['text_muted'],
+                                     bg=COLORS['bg_dark'], anchor="w")
         self.seven_zip_label.pack(side="left", fill="x", expand=True, padx=(0, 10))
-        Button(seven_zip_frame, text="Set Location", 
-               command=self.browse_7zip).pack(side="left")
+        Button(seven_zip_frame, text="[ SET ]", command=self.browse_7zip,
+               font=("Consolas", 9), bg=COLORS['bg_light'],
+               fg=COLORS['text_muted'], activebackground=COLORS['accent_purple'],
+               activeforeground="white", relief="flat", cursor="hand2").pack(side="left")
         
-        # Options
-        options_frame = Frame(main_frame)
-        options_frame.pack(fill="x", pady=(0, 10))
+        # Options panel
+        options_frame = Frame(main_frame, bg=COLORS['bg_light'], padx=10, pady=8)
+        options_frame.pack(fill="x", pady=(0, 12))
         
-        Checkbutton(options_frame, text="Scan subdirectories recursively", 
-                   variable=self.recursive).pack(anchor="w")
+        options_title = Label(options_frame, text="▼ OPTIONS ▼", font=("Consolas", 10, "bold"),
+                             fg=COLORS['accent_pink'], bg=COLORS['bg_light'])
+        options_title.pack(anchor="w", pady=(0, 5))
         
-        Checkbutton(options_frame, text="Move original files to backup folder after conversion", 
-                   variable=self.move_to_backup, fg="blue").pack(anchor="w")
+        # Custom checkbox style
+        cb_font = ("Consolas", 9)
+        cb_bg = COLORS['bg_light']
         
-        Checkbutton(options_frame, text="Delete original files after successful conversion", 
-                   variable=self.delete_originals, fg="red").pack(anchor="w")
+        Checkbutton(options_frame, text="↳ Scan subdirectories recursively",
+                   variable=self.recursive, font=cb_font,
+                   fg=COLORS['text_primary'], bg=cb_bg, selectcolor=COLORS['bg_dark'],
+                   activebackground=cb_bg, activeforeground=COLORS['text_primary']).pack(anchor="w")
+        
+        Checkbutton(options_frame, text="↳ Move originals to backup folder after conversion",
+                   variable=self.move_to_backup, font=cb_font,
+                   fg=COLORS['text_secondary'], bg=cb_bg, selectcolor=COLORS['bg_dark'],
+                   activebackground=cb_bg, activeforeground=COLORS['text_secondary']).pack(anchor="w")
+        
+        Checkbutton(options_frame, text="⚠ Delete original files after successful conversion",
+                   variable=self.delete_originals, font=cb_font,
+                   fg=COLORS['accent_red'], bg=cb_bg, selectcolor=COLORS['bg_dark'],
+                   activebackground=cb_bg, activeforeground=COLORS['accent_red']).pack(anchor="w")
 
-        Checkbutton(options_frame, text="Process PS1 CUE files (.cue)",
-                variable=self.process_ps1_cues, fg="green").pack(anchor="w")
+        Checkbutton(options_frame, text="🎮 Process PS1 CUE files (.cue)",
+                variable=self.process_ps1_cues, font=cb_font,
+                fg=COLORS['button_green'], bg=cb_bg, selectcolor=COLORS['bg_dark'],
+                activebackground=cb_bg, activeforeground=COLORS['button_green']).pack(anchor="w")
 
-        Checkbutton(options_frame, text="Process PS2 ISO files (.iso)",
-                variable=self.process_ps2_isos, fg="purple").pack(anchor="w")
+        Checkbutton(options_frame, text="🎮 Process PS2 ISO files (.iso)",
+                variable=self.process_ps2_isos, font=cb_font,
+                fg=COLORS['accent_purple'], bg=cb_bg, selectcolor=COLORS['bg_dark'],
+                activebackground=cb_bg, activeforeground=COLORS['accent_purple']).pack(anchor="w")
 
-        Checkbutton(options_frame, text="Extract compressed files before conversion (.zip, .7z, .rar)",
-                variable=self.extract_compressed, fg="orange").pack(anchor="w")
+        Checkbutton(options_frame, text="📦 Extract compressed files before conversion",
+                variable=self.extract_compressed, font=cb_font,
+                fg=COLORS['accent_orange'], bg=cb_bg, selectcolor=COLORS['bg_dark'],
+                activebackground=cb_bg, activeforeground=COLORS['accent_orange']).pack(anchor="w")
 
-        Checkbutton(options_frame, text="Delete archive files after extraction",
-                variable=self.delete_archives_after_extract, fg="red").pack(anchor="w")
+        Checkbutton(options_frame, text="⚠ Delete archive files after extraction",
+                variable=self.delete_archives_after_extract, font=cb_font,
+                fg=COLORS['accent_red'], bg=cb_bg, selectcolor=COLORS['bg_dark'],
+                activebackground=cb_bg, activeforeground=COLORS['accent_red']).pack(anchor="w")
         
         # Action buttons
-        button_frame = Frame(main_frame)
-        button_frame.pack(fill="x", pady=(0, 10))
+        button_frame = Frame(main_frame, bg=COLORS['bg_dark'])
+        button_frame.pack(fill="x", pady=(0, 8))
         
-        self.scan_button = Button(button_frame, text="Scan for CUE Files", 
-                                 command=self.scan_directory, bg="#4CAF50", fg="white", 
-                                 font=("Arial", 10, "bold"))
-        self.scan_button.pack(side="left", padx=(0, 10))
+        self.scan_button = Button(button_frame, text="▶ SCAN", 
+                                 command=self.scan_directory,
+                                 font=("Consolas", 11, "bold"),
+                                 bg=COLORS['button_green'], fg=COLORS['bg_dark'],
+                                 activebackground=COLORS['text_primary'],
+                                 activeforeground=COLORS['bg_dark'],
+                                 relief="flat", cursor="hand2", padx=15, pady=5)
+        self.scan_button.pack(side="left", padx=(0, 8))
         
-        self.convert_button = Button(button_frame, text="Start Conversion", 
-                                    command=self.start_conversion, bg="#2196F3", fg="white",
-                                    font=("Arial", 10, "bold"), state="disabled")
-        self.convert_button.pack(side="left", padx=(0, 10))
+        self.convert_button = Button(button_frame, text="⚡ CONVERT", 
+                                    command=self.start_conversion,
+                                    font=("Consolas", 11, "bold"),
+                                    bg=COLORS['button_blue'], fg="white",
+                                    activebackground=COLORS['text_secondary'],
+                                    activeforeground=COLORS['bg_dark'],
+                                    disabledforeground=COLORS['text_muted'],
+                                    relief="flat", cursor="hand2", padx=15, pady=5,
+                                    state="disabled")
+        self.convert_button.pack(side="left", padx=(0, 8))
         
-        self.stop_button = Button(button_frame, text="Stop", 
-                                 command=self.stop_conversion, bg="#f44336", fg="white",
+        self.stop_button = Button(button_frame, text="■ STOP", 
+                                 command=self.stop_conversion,
+                                 font=("Consolas", 11, "bold"),
+                                 bg=COLORS['accent_red'], fg="white",
+                                 activebackground=COLORS['accent_orange'],
+                                 disabledforeground=COLORS['text_muted'],
+                                 relief="flat", cursor="hand2", padx=15, pady=5,
                                  state="disabled")
-        self.stop_button.pack(side="left")
+        self.stop_button.pack(side="left", padx=(0, 8))
         
-        # Second row of buttons for CHD management
-        button_frame2 = Frame(main_frame)
-        button_frame2.pack(fill="x", pady=(0, 10))
+        self.move_chd_button = Button(button_frame, text="📁 MOVE CHD", 
+                                     command=self.move_chd_files_dialog,
+                                     font=("Consolas", 11, "bold"),
+                                     bg=COLORS['accent_purple'], fg="white",
+                                     activebackground=COLORS['accent_pink'],
+                                     relief="flat", cursor="hand2", padx=15, pady=5)
+        self.move_chd_button.pack(side="left")
         
-        self.move_chd_button = Button(button_frame2, text="Move CHD Files", 
-                                     command=self.move_chd_files_dialog, bg="#9C27B0", fg="white",
-                                     font=("Arial", 10, "bold"))
-        self.move_chd_button.pack(side="left", padx=(0, 10))
+        # Progress bar with retro style
+        progress_frame = Frame(main_frame, bg=COLORS['bg_dark'])
+        progress_frame.pack(fill="x", pady=(0, 8))
         
-        # Progress bar
-        self.progress = ttk.Progressbar(main_frame, mode='determinate')
-        self.progress.pack(fill="x", pady=(0, 10))
+        self.progress = ttk.Progressbar(progress_frame, mode='determinate',
+                                        style="Retro.Horizontal.TProgressbar")
+        self.progress.pack(fill="x", ipady=3)
         
-        # Log area
-        log_label = Label(main_frame, text="Log Output:", anchor="w")
-        log_label.pack(fill="x")
+        # Log area with terminal aesthetic
+        log_label = Label(main_frame, text="◄ TERMINAL OUTPUT ►", anchor="w",
+                         font=("Consolas", 10, "bold"),
+                         fg=COLORS['text_secondary'], bg=COLORS['bg_dark'])
+        log_label.pack(fill="x", pady=(0, 4))
         
-        log_frame = Frame(main_frame)
+        log_frame = Frame(main_frame, bg=COLORS['bg_dark'])
         log_frame.pack(fill="both", expand=True)
         
-        scrollbar = Scrollbar(log_frame)
+        scrollbar = Scrollbar(log_frame, bg=COLORS['bg_light'],
+                             troughcolor=COLORS['bg_dark'],
+                             activebackground=COLORS['text_primary'])
         scrollbar.pack(side="right", fill="y")
         
-        self.log_text = Text(log_frame, wrap="word", yscrollcommand=scrollbar.set, 
-                            height=15, bg="#f5f5f5")
+        self.log_text = Text(log_frame, wrap="word", yscrollcommand=scrollbar.set,
+                            height=12, font=("Consolas", 9),
+                            bg=COLORS['bg_medium'], fg=COLORS['text_primary'],
+                            insertbackground=COLORS['text_primary'],
+                            selectbackground=COLORS['accent_purple'],
+                            selectforeground="white",
+                            relief="flat", padx=8, pady=8)
         self.log_text.pack(side="left", fill="both", expand=True)
         scrollbar.config(command=self.log_text.yview)
         
         # Status bar
-        self.status_label = Label(main_frame, text=f"Ready (System: {self.cpu_cores} CPU cores available)", 
-                                 anchor="w", relief="sunken")
-        self.status_label.pack(fill="x", pady=(10, 0))
+        self.status_label = Label(main_frame, 
+                                 text=f"▶ READY | {self.cpu_cores} CPU CORES AVAILABLE",
+                                 font=("Consolas", 9, "bold"),
+                                 fg=COLORS['text_primary'], bg=COLORS['bg_light'],
+                                 anchor="w", padx=8, pady=4)
+        self.status_label.pack(fill="x", pady=(8, 4))
 
-        # Metrics label (prominently visible)
-        self.metrics_label = Label(main_frame, text="Metrics: idle", anchor="w", 
-                                   bg="#e8f4f8", fg="#000000", relief="sunken", 
-                                   font=("Arial", 9, "bold"), padx=5, pady=3)
-        self.metrics_label.pack(fill="x", pady=(4,0))
+        # Metrics label with retro styling
+        self.metrics_label = Label(main_frame, text="◆ METRICS: IDLE ◆", anchor="w", 
+                                   bg=COLORS['bg_medium'], fg=COLORS['accent_yellow'],
+                                   font=("Consolas", 9, "bold"), padx=8, pady=4)
+        self.metrics_label.pack(fill="x")
 
         if not PSUTIL_AVAILABLE:
-            self.log("psutil not installed. Install with: pip install psutil for resource metrics.")
+            self.log("⚠ psutil not installed. Run: pip install psutil for resource metrics.")
         
         # Add trace callbacks to save config when options change
         self.delete_originals.trace_add('write', lambda *args: self.save_config())
@@ -1187,7 +1301,7 @@ class ROMConverter:
         self.convert_button.config(state="disabled")
         self.scan_button.config(state="disabled")
         self.stop_button.config(state="normal")
-        self.status_label.config(text="Converting...")
+        self.status_label.config(text="⚡ CONVERTING...", fg=COLORS['accent_yellow'])
         
         # Run conversion in separate thread
         thread = threading.Thread(target=self.conversion_thread, daemon=True)
@@ -1199,7 +1313,7 @@ class ROMConverter:
         """Stop the conversion process"""
         self.is_converting = False
         self.stop_button.config(state="disabled")
-        self.status_label.config(text="Stopping...")
+        self.status_label.config(text="■ STOPPING...", fg=COLORS['accent_orange'])
     
     def conversion_complete(self):
         """Called when conversion is complete"""
@@ -1207,9 +1321,10 @@ class ROMConverter:
         self.scan_button.config(state="normal")
         self.stop_button.config(state="disabled")
         self.progress.config(value=0)
-        self.status_label.config(text=f"Ready (System: {self.cpu_cores} CPU cores available)")
+        self.status_label.config(text=f"▶ READY | {self.cpu_cores} CPU CORES AVAILABLE", 
+                                fg=COLORS['text_primary'])
         self.metrics_running = False
-        self.metrics_label.config(text="Metrics: idle")
+        self.metrics_label.config(text="◆ METRICS: IDLE ◆")
 
     def format_seconds(self, seconds):
         if seconds is None or seconds < 0:
@@ -1242,15 +1357,15 @@ class ROMConverter:
                 rate_write = (io.write_bytes - self.last_disk_write_bytes) / 0.5
                 self.last_disk_write_bytes = io.write_bytes
                 metrics_text = (
-                    f"CPU {cpu:.0f}% | Mem {mem.percent:.0f}% | DiskW {written_total/1024/1024:.1f}MB (+{rate_write/1024/1024:.1f}MB/s) | "
-                    f"Jobs {completed}/{total} | Avg {avg_time:.1f}s | Elapsed {self.format_seconds(elapsed)} | ETA {self.format_seconds(overall_eta)}"
+                    f"◆ CPU {cpu:.0f}% │ MEM {mem.percent:.0f}% │ DISK {written_total/1024/1024:.1f}MB (+{rate_write/1024/1024:.1f}MB/s) │ "
+                    f"JOBS {completed}/{total} │ AVG {avg_time:.1f}s │ ELAPSED {self.format_seconds(elapsed)} │ ETA {self.format_seconds(overall_eta)} ◆"
                 )
             except Exception:
-                metrics_text = f"Jobs {completed}/{total} | Avg {avg_time:.1f}s | ETA {self.format_seconds(overall_eta)}"
+                metrics_text = f"◆ JOBS {completed}/{total} │ AVG {avg_time:.1f}s │ ETA {self.format_seconds(overall_eta)} ◆"
         else:
-            metrics_text = f"Jobs {completed}/{total} | Avg {avg_time:.1f}s | ETA {self.format_seconds(overall_eta)}"
+            metrics_text = f"◆ JOBS {completed}/{total} │ AVG {avg_time:.1f}s │ ETA {self.format_seconds(overall_eta)} ◆"
         self.metrics_label.config(text=metrics_text)
-        self.status_label.config(text=f"Converting {completed}/{total} ETA {self.format_seconds(overall_eta)}")
+        self.status_label.config(text=f"⚡ CONVERTING {completed}/{total} │ ETA {self.format_seconds(overall_eta)}")
         self.master.after(500, self.update_metrics)
 
     def clean_game_name(self, filename):
@@ -1286,21 +1401,31 @@ class ROMConverter:
     
     def move_chd_files_dialog(self):
         """Open dialog to move CHD files"""
-        # Create dialog window
+        # Create dialog window with retro styling
         dialog = Toplevel(self.master)
-        dialog.title("Move CHD Files")
-        dialog.geometry("600x500")
+        dialog.title("◄ MOVE CHD FILES ►")
+        dialog.geometry("650x550")
         dialog.resizable(True, True)
         dialog.transient(self.master)
         dialog.grab_set()
+        dialog.configure(bg=COLORS['bg_dark'])
+        
+        # Title
+        title_frame = Frame(dialog, bg=COLORS['bg_light'], pady=6)
+        title_frame.pack(fill="x", padx=10, pady=(10, 10))
+        Label(title_frame, text="📁 CHD FILE MANAGER", font=("Consolas", 14, "bold"),
+              fg=COLORS['accent_purple'], bg=COLORS['bg_light']).pack()
         
         # Source directory
-        source_frame = Frame(dialog, padx=10, pady=5)
+        source_frame = Frame(dialog, padx=10, pady=5, bg=COLORS['bg_dark'])
         source_frame.pack(fill="x")
         
-        Label(source_frame, text="Source Folder:").pack(side="left")
-        source_entry = Entry(source_frame)
-        source_entry.pack(side="left", fill="x", expand=True, padx=5)
+        Label(source_frame, text="📂 Source:", font=("Consolas", 10, "bold"),
+              fg=COLORS['text_primary'], bg=COLORS['bg_dark']).pack(side="left")
+        source_entry = Entry(source_frame, font=("Consolas", 10),
+                            bg=COLORS['bg_input'], fg=COLORS['text_primary'],
+                            insertbackground=COLORS['text_primary'], relief="flat")
+        source_entry.pack(side="left", fill="x", expand=True, padx=5, ipady=3)
         if self.source_dir:
             source_entry.insert(0, self.source_dir)
         
@@ -1310,15 +1435,20 @@ class ROMConverter:
                 source_entry.delete(0, "end")
                 source_entry.insert(0, folder)
         
-        Button(source_frame, text="Browse", command=browse_source).pack(side="left")
+        Button(source_frame, text="[ BROWSE ]", command=browse_source,
+               font=("Consolas", 9), bg=COLORS['bg_light'],
+               fg=COLORS['text_secondary'], relief="flat", cursor="hand2").pack(side="left")
         
         # Destination directory
-        dest_frame = Frame(dialog, padx=10, pady=5)
+        dest_frame = Frame(dialog, padx=10, pady=5, bg=COLORS['bg_dark'])
         dest_frame.pack(fill="x")
         
-        Label(dest_frame, text="Destination:").pack(side="left")
-        dest_entry = Entry(dest_frame)
-        dest_entry.pack(side="left", fill="x", expand=True, padx=5)
+        Label(dest_frame, text="📁 Destination:", font=("Consolas", 10, "bold"),
+              fg=COLORS['text_primary'], bg=COLORS['bg_dark']).pack(side="left")
+        dest_entry = Entry(dest_frame, font=("Consolas", 10),
+                          bg=COLORS['bg_input'], fg=COLORS['text_primary'],
+                          insertbackground=COLORS['text_primary'], relief="flat")
+        dest_entry.pack(side="left", fill="x", expand=True, padx=5, ipady=3)
         
         def browse_dest():
             folder = filedialog.askdirectory(title="Select Destination Folder")
@@ -1326,37 +1456,54 @@ class ROMConverter:
                 dest_entry.delete(0, "end")
                 dest_entry.insert(0, folder)
         
-        Button(dest_frame, text="Browse", command=browse_dest).pack(side="left")
+        Button(dest_frame, text="[ BROWSE ]", command=browse_dest,
+               font=("Consolas", 9), bg=COLORS['bg_light'],
+               fg=COLORS['text_secondary'], relief="flat", cursor="hand2").pack(side="left")
         
         # Options
-        options_frame = Frame(dialog, padx=10, pady=5)
-        options_frame.pack(fill="x")
+        options_frame = Frame(dialog, padx=10, pady=8, bg=COLORS['bg_light'])
+        options_frame.pack(fill="x", padx=10, pady=5)
+        
+        cb_font = ("Consolas", 9)
+        cb_bg = COLORS['bg_light']
         
         remove_locale = BooleanVar(value=True)
-        Checkbutton(options_frame, text="Remove locale descriptors from names (USA, Europe, Japan, etc.)", 
-                   variable=remove_locale).pack(anchor="w")
+        Checkbutton(options_frame, text="↳ Remove locale descriptors (USA, Europe, Japan, etc.)", 
+                   variable=remove_locale, font=cb_font,
+                   fg=COLORS['text_secondary'], bg=cb_bg, selectcolor=COLORS['bg_dark'],
+                   activebackground=cb_bg).pack(anchor="w")
         
         recursive_scan = BooleanVar(value=True)
-        Checkbutton(options_frame, text="Scan subdirectories", 
-                   variable=recursive_scan).pack(anchor="w")
+        Checkbutton(options_frame, text="↳ Scan subdirectories", 
+                   variable=recursive_scan, font=cb_font,
+                   fg=COLORS['text_secondary'], bg=cb_bg, selectcolor=COLORS['bg_dark'],
+                   activebackground=cb_bg).pack(anchor="w")
         
         copy_instead = BooleanVar(value=False)
-        Checkbutton(options_frame, text="Copy files instead of moving", 
-                   variable=copy_instead).pack(anchor="w")
+        Checkbutton(options_frame, text="↳ Copy files instead of moving", 
+                   variable=copy_instead, font=cb_font,
+                   fg=COLORS['accent_orange'], bg=cb_bg, selectcolor=COLORS['bg_dark'],
+                   activebackground=cb_bg).pack(anchor="w")
         
-        # Scan button and results
-        results_frame = Frame(dialog, padx=10, pady=5)
+        # Results area
+        results_frame = Frame(dialog, padx=10, pady=5, bg=COLORS['bg_dark'])
         results_frame.pack(fill="both", expand=True)
         
-        # Results listbox with scrollbar
-        list_frame = Frame(results_frame)
+        Label(results_frame, text="◄ SCAN RESULTS ►", font=("Consolas", 10, "bold"),
+              fg=COLORS['text_secondary'], bg=COLORS['bg_dark']).pack(anchor="w", pady=(0, 4))
+        
+        list_frame = Frame(results_frame, bg=COLORS['bg_dark'])
         list_frame.pack(fill="both", expand=True)
         
-        scrollbar = Scrollbar(list_frame)
+        scrollbar = Scrollbar(list_frame, bg=COLORS['bg_light'],
+                             troughcolor=COLORS['bg_dark'])
         scrollbar.pack(side="right", fill="y")
         
-        results_text = Text(list_frame, wrap="word", yscrollcommand=scrollbar.set, 
-                           height=12, bg="#f5f5f5")
+        results_text = Text(list_frame, wrap="word", yscrollcommand=scrollbar.set,
+                           height=10, font=("Consolas", 9),
+                           bg=COLORS['bg_medium'], fg=COLORS['text_primary'],
+                           insertbackground=COLORS['text_primary'], relief="flat",
+                           padx=8, pady=8)
         results_text.pack(side="left", fill="both", expand=True)
         scrollbar.config(command=results_text.yview)
         
@@ -1475,18 +1622,27 @@ class ROMConverter:
             if success_count > 0:
                 messagebox.showinfo("Complete", f"Successfully {'copied' if copy_instead.get() else 'moved'} {success_count} file(s)")
         
-        # Action buttons
-        action_frame = Frame(dialog, padx=10, pady=10)
+        # Action buttons with retro styling
+        action_frame = Frame(dialog, padx=10, pady=10, bg=COLORS['bg_dark'])
         action_frame.pack(fill="x")
         
-        Button(action_frame, text="Scan for CHD Files", command=scan_for_chd,
-               bg="#4CAF50", fg="white", font=("Arial", 10, "bold")).pack(side="left", padx=5)
+        Button(action_frame, text="▶ SCAN", command=scan_for_chd,
+               font=("Consolas", 11, "bold"),
+               bg=COLORS['button_green'], fg=COLORS['bg_dark'],
+               activebackground=COLORS['text_primary'],
+               relief="flat", cursor="hand2", padx=15, pady=5).pack(side="left", padx=5)
         
-        Button(action_frame, text="Move/Copy Files", command=execute_move,
-               bg="#2196F3", fg="white", font=("Arial", 10, "bold")).pack(side="left", padx=5)
+        Button(action_frame, text="📁 MOVE/COPY", command=execute_move,
+               font=("Consolas", 11, "bold"),
+               bg=COLORS['button_blue'], fg="white",
+               activebackground=COLORS['text_secondary'],
+               relief="flat", cursor="hand2", padx=15, pady=5).pack(side="left", padx=5)
         
-        Button(action_frame, text="Close", command=dialog.destroy,
-               bg="#757575", fg="white", font=("Arial", 10)).pack(side="right", padx=5)
+        Button(action_frame, text="✕ CLOSE", command=dialog.destroy,
+               font=("Consolas", 11, "bold"),
+               bg=COLORS['text_muted'], fg="white",
+               activebackground=COLORS['accent_red'],
+               relief="flat", cursor="hand2", padx=15, pady=5).pack(side="right", padx=5)
 
 
 def main():
